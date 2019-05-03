@@ -6,243 +6,178 @@
 
 #define STACK_SIZE 500
 
-int m1 = 0;
-int mutex_to_lock = 0;
-
-void print_thread(){
-    sleep(10);
-    printf(1, "thread printing ... \n");
+void get_to_work() {
+    sleep(15);
+    printf(1, "working ... \n");
     kthread_exit();
-
 }
 
-void print_thread_id(){
-    sleep(10);
+void give_me_your_id() {
+    sleep(15);
     int res = kthread_id();
-    if(res==-1) printf(1, "kthread_id Failed..\n");
-    else printf(1, "kthread_id success :) ..... my id is: %d......\n", res);
+    if (res == -1) printf(1, "kthread_id FAIL..\n");
+    else printf(1, "kthread_id SUCCESS ..... my id is: %d......\n", res);
     kthread_exit();
 
 }
+void test_kthread_create() {
+    printf(1, "TESTING KTHREAD_CREATE\n");
+    printf(1, "**************************************************************\n");
+    void *stack = ((char *) malloc(STACK_SIZE * sizeof(char))) + STACK_SIZE;
 
-void func_dealloc(int mutex_id){
-    sleep(10);
-    int res = kthread_mutex_dealloc(mutex_id);
-    if(res == -1) printf(1, "dealloc2 failed, as it should be\n");
-    else printf(1, "dealloc1 succeed, not good\n");
-    kthread_exit();
+    int tid = kthread_create(get_to_work, stack);
 
+    if (tid == -1) printf(1, "kthread_create FAIL\n");
+    else printf(1, "kthread_create SUCCESS\n");
 }
 
+void test_kthread_join() {
+    printf(1, "TESTING KTHREAD_JOIN\n");
+    printf(1, "**************************************************************\n");
+    void *stack = ((char *) malloc(STACK_SIZE * sizeof(char))) + STACK_SIZE;
 
-void func_unlock(int mutex_id){
-    sleep(10);
-    int res = kthread_mutex_unlock(mutex_id);
-    if(res == -1) printf(1, "lock failed, the mutex is already unlocked as it should be\n");
-    else printf(1, "lock succeed, not good\n");
-    kthread_exit();
-}
+    int tid = kthread_create(get_to_work, stack);
 
-
-#define THREAD_FUNC(name, mutex_id) \
-    void name(){ \
-        sleep(10); \
-        int res = kthread_mutex_dealloc(mutex_id); \
-        if(res == -1) printf(1, "dealloc2 failed, as it should be :)\n"); \
-        else printf(1, "dealloc1 succeed, not good :(\n"); \
-        kthread_exit(); \
-    }
-
-THREAD_FUNC(dealloc, m1)
+    int joined = kthread_join(tid);
 
 
-void test_kthread_create(){
-    void * stack = ((char *) malloc(STACK_SIZE * sizeof(char))) + STACK_SIZE;
-
-    int tid = kthread_create(print_thread, stack);
-
-    if(tid == -1) printf(1, "kthread_create failed :(\n");
-    else printf(1, "kthread_create success :)\n");
-
-//    kthread_join(tid);
-
-}
-
-void test_kthread_join(){
-    void * stack = ((char *) malloc(STACK_SIZE * sizeof(char))) + STACK_SIZE;
-
-    int tid = kthread_create(print_thread, stack);
-
-    int res = kthread_join(tid);
-
-
-    if(res == -1) printf(1, "kthread_join failed :(\n");
-    else printf(1, "kthread_join success :)\n");
+    if (joined == -1) printf(1, "kthread_join FAIL\n");
+    else printf(1, "kthread_join SUCCESS\n");
 
 
 }
 
-void test_kthread_id(){
-    void * stack = ((char *) malloc(STACK_SIZE * sizeof(char))) + STACK_SIZE;
+void test_kthread_id() {
+    printf(1, "TESTING KTHREAD_ID\n");
+    printf(1, "**************************************************************\n");
+    void *stack = ((char *) malloc(STACK_SIZE * sizeof(char))) + STACK_SIZE;
 
-    for (int i=0; i< 5; i++){
-        int tid = kthread_create(print_thread_id, stack);
+    for (int i = 0; i < 5; i++) {
+        int tid = kthread_create(give_me_your_id, stack);
         kthread_join(tid);
     }
 
 }
 
 
-void test_mutex_alloc(){
-    printf(1, "Test kthread_mutex_alloc:\n");
-    int res = kthread_mutex_alloc();
+void test_mutex_alloc() {
+    printf(1, "TESTING MUTEX_ALLOC\n");
+    printf(1, "**************************************************************\n");
+    int ret = kthread_mutex_alloc();
 
-    if(res == -1) printf(1, "kthread_mutex_alloc failed :( \n");
-    else printf(1, "kthread_mutex_alloc success :) \n");
+    if (ret == -1) printf(1, "kthread_mutex_alloc FAIL\n");
+    else printf(1, "kthread_mutex_alloc SUCCESS\n");
+}
+
+void test_mutex_dealloc() {
+    printf(1, "TESTING MUTEX_ALLOC\n");
+    printf(1, "**************************************************************\n");
+    int m_id = kthread_mutex_alloc();
+    int ret = kthread_mutex_dealloc(m_id);
+
+    if (ret == 0) printf(1, "dealloc SUCCESS\n");
+    else printf(1, "dealloc FAIL\n");
+}
+
+void test_mutex_lock_unlock() {
+    printf(1, "TESTING MUTEX LOCK UNLOCK\n");
+    printf(1, "**************************************************************\n");
+    int lock_me = kthread_mutex_alloc();
+
+    int ret = kthread_mutex_lock(lock_me);
+    if (ret == 0) printf(1, "lock SUCCESS\n");
+    else printf(1, "lock FAIL\n");
+
+    ret = kthread_mutex_unlock(lock_me);
+    if (ret == 0) printf(1, "unlock SUCCESS\n");
+    else printf(1, "unlock FAIL\n");
+}
+
+void test_trnmnt_alloc() {
+    int depth = 4;
+    trnmnt_tree *tree = trnmnt_tree_alloc(depth);
+
+    int nodes_num = tree->nodes_num;
+    int expected_size = 15;
+
+    if (nodes_num == expected_size) {
+        if (tree->depth == depth) printf(1, "trnmnt_tree_alloc SUCCESS\n");
+        else printf(1, "trnmnt_tree_alloc FAIL\n");
+    } else printf(1, "trnmnt_tree_alloc FAIL\n");
 
 
 }
 
-void test_mutex_dealloc(){
-    printf(1, "Test kthread_mutex_dealloc:\n");
-    m1 = kthread_mutex_alloc();
-    int d1 = kthread_mutex_dealloc(m1);
+void test_trnmnt_dealloc() {
+    int depth = 4;
+    trnmnt_tree *tree = trnmnt_tree_alloc(depth);
 
-    void * stack = ((char *) malloc(STACK_SIZE * sizeof(char))) + STACK_SIZE;
+    int ret = trnmnt_tree_dealloc(tree);
+    if (ret == 0) {
+        ret = trnmnt_tree_dealloc(tree);
+        if (ret == -1) printf(1, "trnmnt_tree_dealloc SUCCESS\n");
+        else printf(1, "trnmnt_tree_dealloc FAIL\n");
+    } else printf(1, "trnmnt_tree_dealloc FAIL\n");
 
-
-    int tid = kthread_create(dealloc, stack);
-
-    if(d1 == 0) printf(1, "dealloc1 succeed :) \n");
-    else printf(1, "dealloc1 failed :( \n");
-
-    kthread_join(tid);
-}
-
-void test_mutex_lock_unlock(){
-    printf(1, "Test kthread_mutex_lock and unlock:\n");
-    mutex_to_lock = kthread_mutex_alloc();
-
-    int res = kthread_mutex_lock(mutex_to_lock);
-    if(res == 0) printf(1, "lock succeed :) \n");
-    else printf(1, "lock failed :( \n");
-
-    res = kthread_mutex_unlock(mutex_to_lock);
-    if(res == 0) printf(1, "unlock succeed :) \n");
-    else printf(1, "unlock failed :( \n");
-
-    void * stack = ((char *) malloc(STACK_SIZE * sizeof(char))) + STACK_SIZE;
-    int tid = kthread_create(func_unlock, stack);
-    kthread_join(tid);
 
 }
 
-//void test_trnmnt_alloc(){
-//    int depth = 3;
-//    trnmnt_tree* tree = trnmnt_tree_alloc(depth);
-//
-//    int size = tree->size;
-//    int expected_size = 7;
-//
-//    if(size == expected_size) printf(1, "trnmnt_tree_alloc size OK :)\n");
-//    else printf(1, "trnmnt_tree_alloc size NOT OK :(\n");
-//
-//    if(tree->depth == depth) printf(1, "trnmnt_tree_alloc depth OK :)\n");
-//    else printf(1, "trnmnt_tree_alloc depth NOT OK :(\n");
-//
-//
-//}
+int acc = 1;
+trnmnt_tree *tree;
 
-void test_trnmnt_dealloc(){
-    int depth = 3;
-    trnmnt_tree* tree = trnmnt_tree_alloc(depth);
-
-    int res = trnmnt_tree_dealloc(tree);
-    if(res == 0) printf(1, "trnmnt_tree_dealloc succeed :)\n");
-    else printf(1, "trnmnt_tree_dealloc failed :(\n");
-
-    res = trnmnt_tree_dealloc(tree);
-    if(res == -1) printf(1, "trnmnt_tree_dealloc failed, as it should be :)\n");
-    else printf(1, "trnmnt_tree_dealloc succeed, NOT OK :(\n");
-
-}
-
-// For test_trnmt_acquire
-int shared_resource = 100;
-trnmnt_tree* tree;
-
-
-#define THREAD_INCREASE(name, tree) \
-    void name(){ \
-    sleep(10); \
-    trnmnt_tree_acquire(tree, 4); \
-    shared_resource += 10; \
-    trnmnt_tree_release(tree, 4); \
-    kthread_exit(); \
+void increase_func(){
+    sleep(15);
+    trnmnt_tree_acquire(tree, 4);
+    acc++;
+    trnmnt_tree_release(tree, 4);
+    kthread_exit();
     }
 
-THREAD_INCREASE(increase_func, tree)
-
-void test_trnmnt_acquire_release(){
+void test_trnmnt_acquire_release() {
     int depth = 3;
     tree = trnmnt_tree_alloc(depth);
 
-    void * stack = ((char *) malloc(STACK_SIZE * sizeof(char))) + STACK_SIZE;
+    void *stack = ((char *) malloc(STACK_SIZE * sizeof(char))) + STACK_SIZE;
     kthread_create(increase_func, stack);
 
     trnmnt_tree_acquire(tree, 7);
 
-    shared_resource += 10;
+    acc++;
 
     trnmnt_tree_release(tree, 7);
 
-    sleep(100);
-    if(shared_resource == 120) printf(1, "trnmnt_acquire succeed :)\n");
-    else printf(1, "trnmnbt acquire failed :(\n");
-
-    printf(1, "should be: t7: 6 -> 2 -> 0\n");
-    printf(1, "should be: t4: 5 -> 2 -> 0\n");
-
+    sleep(150);
+    if (acc == 3) printf(1, "trnmnt_acquire SUCCESS\n");
+    else printf(1, "trnmnbt acquire FAIL\n");
 
 }
 
 
-void test_task2_2(){
-    printf(1, "Test Task2.2: CHECKING KTHREAD\n");
-    printf(1, "----------------------------------------------------------------\n");
+void t2() {
     test_kthread_create();
     test_kthread_join();
     test_kthread_id();
 }
 
 
-
-void test_task3_1(){
-    printf(1, "Test Task3.1: CHECKING MUTEX\n");
-    printf(1, "----------------------------------------------------------------\n");
+void t3_1() {
     test_mutex_alloc();
     test_mutex_dealloc();
     test_mutex_lock_unlock();
 }
 
-//void test_task3_2(){
-//    printf(1, "Test Task3.2: CHECKING TOURNAMENT TREE \n");
-//    printf(1, "----------------------------------------------------------------\n");
-//    test_trnmnt_alloc();
-//    test_trnmnt_dealloc();
-//    test_trnmnt_acquire_release();
-//
-//
-//}
+void t3_2() {
+    test_trnmnt_alloc();
+    test_trnmnt_dealloc();
+    test_trnmnt_acquire_release();
+}
 
 
-
-int main(){
-
-    printf(1, "Sanity started: \n");
-    test_task2_2();
-    test_task3_1();
-//    test_task3_2();
+int main() {
+    printf(1, "     ---------------- SANITY ----------------     \n");
+    t2();
+    t3_1();
+    t3_2();
 
     exit();
 }
